@@ -1,0 +1,24 @@
+{
+  "variants":
+  {
+    "facing=north":
+    {
+      "model": "metallurgical:block/brick_furnace"
+    },
+    "facing=east":
+    {
+      "model": "metallurgical:block/brick_furnace",
+      "y": 90
+    },
+    "facing=south":
+    {
+      "model": "metallurgical:block/brick_furnace",
+      "y": 180
+    },
+    "facing=west":
+    {
+      "model": "metallurgical:block/brick_furnace",
+      "y": 270
+    }
+  }
+}
