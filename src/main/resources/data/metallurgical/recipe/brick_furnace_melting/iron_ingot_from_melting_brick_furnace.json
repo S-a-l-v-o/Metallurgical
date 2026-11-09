@@ -1,0 +1,15 @@
+{
+  "type": "metallurgical:brick_furnace_melting",
+  "ingredients":
+  [
+    {
+      "item": "minecraft:raw_iron"
+    }
+  ],
+  "result":
+  {
+    "id": "minecraft:iron_ingot"
+  },
+  "melting_time": 600,
+  "xp": 1.0
+}
