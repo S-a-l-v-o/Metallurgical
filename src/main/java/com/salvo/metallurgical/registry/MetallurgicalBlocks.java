@@ -20,6 +20,7 @@ public class MetallurgicalBlocks
 
     public static final DeferredBlock<Block> FIRECLAY = registerBlock("fireclay",
             () -> new Block(BlockBehaviour.Properties.of()
+                    .requiresCorrectToolForDrops()
                     .sound(SoundType.WET_GRASS)
                     .strength(1.0F,2.0F)
                     .mapColor(MapColor.COLOR_RED)
@@ -33,10 +34,10 @@ public class MetallurgicalBlocks
                     .mapColor(MapColor.COLOR_RED)
                     .requiresCorrectToolForDrops()
                     .noOcclusion()
+                    .lightLevel(state -> state.getValue(BrickFurnaceBlock.LIT) ? 13 : 0)
             )
     );
 
-    //helpers for registering block items
     private static <T extends Block> DeferredBlock<T> registerBlock(String name, Supplier<T> block)
     {
         DeferredBlock<T> toReturn = BLOCKS.register(name, block);
