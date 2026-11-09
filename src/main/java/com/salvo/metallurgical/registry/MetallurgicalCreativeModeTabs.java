@@ -23,6 +23,7 @@ public class MetallurgicalCreativeModeTabs
                     .displayItems((itemDisplayParameters, output) ->
                     {
                         output.accept(MetallurgicalBlocks.BRICK_FURNACE);
+                        output.accept(MetallurgicalBlocks.FIRECLAY);
                     })
                     .build()
     );
