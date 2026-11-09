@@ -6,9 +6,7 @@ import com.salvo.metallurgical.registry.MetallurgicalMenuTypes;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.ContainerLevelAccess;
-import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.inventory.*;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -18,35 +16,61 @@ public class BrickFurnaceMenu extends AbstractContainerMenu
 {
     public final BrickFurnaceBlockEntity blockEntity;
     private final Level level;
+    private final ContainerData data;
 
     public BrickFurnaceMenu(int containerId, Inventory inv, FriendlyByteBuf extraData)
     {
-        this(containerId, inv, inv.player.level().getBlockEntity(extraData.readBlockPos()));
+        this(containerId, inv, inv.player.level().getBlockEntity(extraData.readBlockPos()), new SimpleContainerData(4));
     }
 
-    public BrickFurnaceMenu(int containerId, Inventory inv, BlockEntity blockEntity)
+    public BrickFurnaceMenu(int containerId, Inventory inv, BlockEntity blockEntity, ContainerData data)
     {
         super(MetallurgicalMenuTypes.BRICK_FURNACE_MENU.get(), containerId);
         this.blockEntity = ((BrickFurnaceBlockEntity) blockEntity);
         this.level = inv.player.level();
+        this.data = data;
 
         addPlayerInventory(inv);
         addPlayerHotbar(inv);
 
         //slots 0-3 are brick furnace melting inputs
-        this.addSlot(new SlotItemHandler(this.blockEntity.inventory, 0, 33,8));
-        this.addSlot(new SlotItemHandler(this.blockEntity.inventory, 1, 51,8));
-        this.addSlot(new SlotItemHandler(this.blockEntity.inventory, 2, 33,26));
-        this.addSlot(new SlotItemHandler(this.blockEntity.inventory, 3, 51,26));
+        this.addSlot(new SlotItemHandler(this.blockEntity.itemHandler, 0, 33,8));
+        this.addSlot(new SlotItemHandler(this.blockEntity.itemHandler, 1, 51,8));
+        this.addSlot(new SlotItemHandler(this.blockEntity.itemHandler, 2, 33,26));
+        this.addSlot(new SlotItemHandler(this.blockEntity.itemHandler, 3, 51,26));
 
         //slot 4 is the fuel input
-        this.addSlot(new SlotItemHandler(this.blockEntity.inventory, 4, 43,61));
+        this.addSlot(new SlotItemHandler(this.blockEntity.itemHandler, 4, 43,61));
 
         //slot 5 is the crucible input
-        this.addSlot(new SlotItemHandler(this.blockEntity.inventory, 5, 75,44));
+        this.addSlot(new SlotItemHandler(this.blockEntity.itemHandler, 5, 75,44));
 
         //slot 6 is the output
-        this.addSlot(new SlotItemHandler(this.blockEntity.inventory, 6, 130,44));
+        this.addSlot(new SlotItemHandler(this.blockEntity.itemHandler, 6, 130,44));
+
+        addDataSlots(data);
+    }
+
+    public boolean isMelting() { return data.get(0) > 1; };
+
+    public boolean isBurning() { return data.get(2) > 1; }
+
+    public int getScaledArrowProgress()
+    {
+        int meltingProgress = this.data.get(0);
+        int maxMeltingProgress = this.data.get(1);
+        int arrowPixelWidth = 24;
+
+        return maxMeltingProgress != 0 && meltingProgress != 0 ? meltingProgress * arrowPixelWidth / maxMeltingProgress : 0;
+    }
+
+    public int getScaledBurningProgress()
+    {
+        int fuelTime = this.data.get(2);
+        int maxFuelTime = this.data.get(3);
+        int firePixelHeight = 16;
+
+        return maxFuelTime != 0 && fuelTime != 0 ? fuelTime * firePixelHeight / maxFuelTime : 0;
     }
 
     // CREDIT GOES TO: diesieben07 | https://github.com/diesieben07/SevenCommons

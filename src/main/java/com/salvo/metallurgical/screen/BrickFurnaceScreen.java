@@ -21,7 +21,7 @@ public class BrickFurnaceScreen extends AbstractContainerScreen<BrickFurnaceMenu
     @Override
     protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY)
     {
-        //left empty to prevent "inventory" text from rendering
+        //left empty to prevent "inventory" text from rendering in menu
     }
 
     @Override
@@ -35,6 +35,25 @@ public class BrickFurnaceScreen extends AbstractContainerScreen<BrickFurnaceMenu
         int y = (height - imageHeight) / 2;
 
         guiGraphics.blit(GUI_TEXTURE, x, y, 0, 0, imageWidth, imageHeight);
+        renderArrowProgress(guiGraphics,x + 98,y + 45);
+        renderFuelBurning(guiGraphics, x + 42, y + 43);
+    }
+
+    private void renderArrowProgress(GuiGraphics guiGraphics, int x, int y)
+    {
+        if (menu.isMelting())
+        {
+            guiGraphics.blit(GUI_TEXTURE, x, y, 177, 17, menu.getScaledArrowProgress(),16, 256, 256);
+        }
+    }
+
+    private void renderFuelBurning(GuiGraphics guiGraphics, int x, int y)
+    {
+        if (menu.isBurning())
+        {
+            int offset = 14 - menu.getScaledBurningProgress();
+            guiGraphics.blit(GUI_TEXTURE, x, y + offset, 176, offset, 14,menu.getScaledBurningProgress(), 256, 256);
+        }
     }
 
     @Override
