@@ -1,5 +1,6 @@
 package com.salvo.metallurgical;
 
+import com.salvo.metallurgical.recipe.MetallurgicalRecipes;
 import com.salvo.metallurgical.registry.*;
 import com.salvo.metallurgical.screen.BrickFurnaceScreen;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
@@ -54,6 +55,7 @@ public class Metallurgical
         MetallurgicalBlocks.register(modEventBus);
         MetallurgicalBlockEntities.register(modEventBus);
         MetallurgicalMenuTypes.register(modEventBus);
+        MetallurgicalRecipes.register((modEventBus));
 
         modEventBus.addListener(this::addCreative);
 
@@ -62,16 +64,6 @@ public class Metallurgical
 
     private void commonSetup(FMLCommonSetupEvent event)
     {
-        LOGGER.info("HELLO FROM COMMON SETUP");
-
-        if (Config.LOG_DIRT_BLOCK.getAsBoolean())
-        {
-            LOGGER.info("DIRT BLOCK >> {}", BuiltInRegistries.BLOCK.getKey(Blocks.DIRT));
-        }
-
-        LOGGER.info("{}{}", Config.MAGIC_NUMBER_INTRODUCTION.get(), Config.MAGIC_NUMBER.getAsInt());
-
-        Config.ITEM_STRINGS.get().forEach((item) -> LOGGER.info("ITEM >> {}", item));
     }
 
     private void addCreative(BuildCreativeModeTabContentsEvent event)
@@ -93,13 +85,6 @@ public class Metallurgical
     @EventBusSubscriber(modid = Metallurgical.MOD_ID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
     static class ClientModEvents
     {
-        @SubscribeEvent
-        static void onClientSetup(FMLClientSetupEvent event)
-        {
-            LOGGER.info("HELLO FROM CLIENT SETUP");
-            LOGGER.info("MINECRAFT NAME >> {}", Minecraft.getInstance().getUser().getName());
-        }
-
         @SubscribeEvent
         public static void registerScreens(RegisterMenuScreensEvent event)
         {
