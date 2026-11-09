@@ -2,6 +2,7 @@ package com.salvo.metallurgical.block;
 
 import com.mojang.serialization.MapCodec;
 import com.salvo.metallurgical.block.blockentity.BrickFurnaceBlockEntity;
+import com.salvo.metallurgical.registry.MetallurgicalBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -19,10 +20,13 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
@@ -32,24 +36,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class BrickFurnaceBlock extends BaseEntityBlock implements EntityBlock
 {
-    /* --- BLOCK STUFF --- */
     public static final MapCodec<BrickFurnaceBlock> CODEC = simpleCodec(BrickFurnaceBlock::new);
-
-    public static final VoxelShape BASE_SHAPE = Block.box(0,0,0,16,16,16);
-    public static final VoxelShape CHIMNEY_SHAPE_1 = Block.box(1,16,1,15,20,15);
-    public static final VoxelShape CHIMNEY_SHAPE_2 = Block.box(2,20,2,14,24,14);
-    public static final VoxelShape CHIMNEY_SHAPE_3 = Block.box(3,24,3,13,28,13);
-    public static final VoxelShape CHIMNEY_SHAPE_4 = Block.box(4,28,4,12,32,12);
-
-    public static final VoxelShape COMPLETE_SHAPE = Shapes.or(BASE_SHAPE, CHIMNEY_SHAPE_1, CHIMNEY_SHAPE_2, CHIMNEY_SHAPE_3, CHIMNEY_SHAPE_4);
-
-    public static final DirectionProperty FACING = BlockStateProperties.FACING;
-
-    public BrickFurnaceBlock(BlockBehaviour.Properties properties)
-    {
-        super(properties);
-        registerDefaultState(getStateDefinition().any().setValue(FACING, Direction.NORTH));
-    }
 
     @Override
     protected MapCodec<? extends BaseEntityBlock> codec()
@@ -57,29 +44,53 @@ public class BrickFurnaceBlock extends BaseEntityBlock implements EntityBlock
         return CODEC;
     }
 
-    @Override
-    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context)
+    public BrickFurnaceBlock(BlockBehaviour.Properties properties)
     {
-        return COMPLETE_SHAPE;
+        super(properties);
+        registerDefaultState(getStateDefinition().any().setValue(FACING, Direction.NORTH).setValue(LIT, false));
     }
+
+    // -----------------------------
+    // Block States
+    // -----------------------------
+    public static final DirectionProperty FACING = BlockStateProperties.FACING;
+    public static final BooleanProperty LIT = BlockStateProperties.LIT;
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder)
     {
-        builder.add(FACING);
+        builder.add(FACING, LIT);
     }
 
     @Override
     public @Nullable BlockState getStateForPlacement(BlockPlaceContext context)
     {
-        return super.getStateForPlacement(context).setValue(FACING, context.getHorizontalDirection().getOpposite());
+        return super.getStateForPlacement(context).setValue(FACING, context.getHorizontalDirection().getOpposite()).setValue(LIT, false);
     }
 
-    /* --- BLOCK ENTITY STUFF --- */
+    // -----------------------------
+    // Rendering
+    // -----------------------------
+    public static final VoxelShape FURNACE_BASE = Block.box(0,0,0,16,16,16);
+    public static final VoxelShape FURNACE_CHIMNEY_1 = Block.box(1,16,1,15,20,15);
+    public static final VoxelShape FURNACE_CHIMNEY_2 = Block.box(2,20,2,14,24,14);
+    public static final VoxelShape FURNACE_CHIMNEY_3 = Block.box(3,24,3,13,28,13);
+    public static final VoxelShape FURNACE_CHIMNEY_4 = Block.box(4,28,4,12,32,12);
+    public static final VoxelShape BLOCK_SHAPE = Shapes.or(FURNACE_BASE, FURNACE_CHIMNEY_1, FURNACE_CHIMNEY_2, FURNACE_CHIMNEY_3, FURNACE_CHIMNEY_4);
+
     @Override
-    protected RenderShape getRenderShape(BlockState state)
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) { return BLOCK_SHAPE; }
+
+    @Override
+    protected RenderShape getRenderShape(BlockState state) { return RenderShape.MODEL; }
+
+    // -----------------------------
+    // Block Entity Logic
+    // -----------------------------
+    @Override
+    public BlockEntity newBlockEntity(BlockPos blockPos, BlockState blockState)
     {
-        return RenderShape.MODEL;
+        return new BrickFurnaceBlockEntity(blockPos, blockState);
     }
 
     @Override
@@ -91,6 +102,7 @@ public class BrickFurnaceBlock extends BaseEntityBlock implements EntityBlock
             if (blockentity instanceof BrickFurnaceBlockEntity brickFurnaceBlockEntity)
             {
                 brickFurnaceBlockEntity.drops();
+                brickFurnaceBlockEntity.rewardAndResetStoredExperience();
                 level.updateNeighbourForOutputSignal(pos, this);
             }
         }
@@ -112,8 +124,13 @@ public class BrickFurnaceBlock extends BaseEntityBlock implements EntityBlock
     }
 
     @Override
-    public BlockEntity newBlockEntity(BlockPos blockPos, BlockState blockState)
+    public @Nullable <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> blockEntityType)
     {
-        return new BrickFurnaceBlockEntity(blockPos, blockState);
+        if (level.isClientSide())
+        {
+            return createTickerHelper(blockEntityType,MetallurgicalBlockEntities.BRICK_FURNACE_BLOCK_ENTITY.get(), (level1, blockPos, blockState, blockEntity) -> blockEntity.clientTick(level1, blockPos, blockState));
+        }
+
+        return createTickerHelper(blockEntityType, MetallurgicalBlockEntities.BRICK_FURNACE_BLOCK_ENTITY.get(), (level1, blockPos, blockState, blockEntity) -> blockEntity.serverTick(level1, blockPos, blockState));
     }
 }
